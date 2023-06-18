@@ -101,17 +101,20 @@ async def download(url, name, message):
 	try:
 		video = YouTube(url)
 		start_d = await bot.send_message(message.chat.id, f'💾Началось скачивание <i>{video.title}</i>', 'HTML')
-		audio = video.streams.filter(only_audio = True).first()
-		name_path = audio.download(name+'/')
-		mp3 = f"{name}/{video.title}.mp3"
-		convert(name_path, mp3)
-		matadata(f"{name}/{video.title}.mp3",video.title,video.author)
-		file = await bot.send_audio(message.chat.id,audio=open(f"{name}/{video.title}.mp3", 'rb'))
-		file_id = file.audio.file_id
-		with open(f'{userid}/ids.txt', 'a') as file:
-			file.write(file_id+' ')
-		os.remove(name_path)
-		os.remove(f"{name}/{video.title}.mp3")
+		if video.length > 1800:
+			await bot.send_message(message.chat.id, f'❌<i>{video.title}</i> длится более 30 минут!', 'HTML')
+		else:
+			audio = video.streams.filter(only_audio = True).first()
+			name_path = audio.download(name+'/')
+			mp3 = f"/root/YMD_bot/{name}/{video.title}.mp3"
+			convert(name_path, mp3)
+			matadata(f"{name}/{video.title}.mp3",video.title,video.author)
+			file = await bot.send_audio(message.chat.id,audio=open(f"{name}/{video.title}.mp3", 'rb'))
+			file_id = file.audio.file_id
+			with open(f'{userid}/ids.txt', 'a') as file:
+				file.write(file_id+' ')
+			os.remove(name_path)
+			os.remove(f"{name}/{video.title}.mp3")
 	except:
 		raise ValueError('Ошибка')
 	await start_d.delete()
