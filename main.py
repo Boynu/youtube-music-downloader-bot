@@ -124,7 +124,7 @@ async def plalist(url, name, message):
 		try:
 			await download(file, name, message)
 		except ValueError:
-			await bot.send_message('❌Ошибка скачивания')
+			await bot.send_message(message.chat.id,'❌Ошибка скачивания')
 			#break
 
 
