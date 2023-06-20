@@ -72,7 +72,7 @@ async def mainmenu(message, state):
 	markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 	markup.row(types.KeyboardButton('📂Показать всю скаченную музыку'))
 	userid = message.chat.id
-	text = '🎵🔗Отправьте ссылку на музыку или плейлист (Из youtube.com или music.youtube.com)\n\n📰Справка /help'
+	text = '🎵🔗Отправьте ссылку на музыку или плейлист (Из youtube.com или music.youtube.com)\nВы можете указать несколько песен через пробел\n\n📰Справка /help'
 	await bot.send_message(message.chat.id, text, reply_markup=markup)
 
 async def check(message, url, state):
@@ -80,15 +80,16 @@ async def check(message, url, state):
 	if 'playlist' in url:
 		await plalist(url, str(userid), message)
 	else:
-		try:
-			await download(url, str(userid), message)
-		except:
-			await bot.send_message(message.chat.id,'❌Ошибка')
+		for link in url.split(' '):
+			try:
+				await download(link, str(userid), message)
+			except:
+				await bot.send_message(message.chat.id, '❌Ошибка')
 
 
 def matadata(path,name,author):
 	audio_file = eyed3.load(path)
-	audio_file.tag.title = name#['Song']
+	audio_file.tag.title = name
 	audio_file.tag.artist = author
 	audio_file.tag.save()
 
@@ -106,7 +107,7 @@ async def download(url, name, message):
 		else:
 			audio = video.streams.filter(only_audio = True).first()
 			name_path = audio.download(name+'/')
-			mp3 = f"/root/YMD_bot/{name}/{video.title}.mp3"
+			mp3 = f"{name}/{video.title}.mp3"
 			convert(name_path, mp3)
 			matadata(f"{name}/{video.title}.mp3",video.title,video.author)
 			file = await bot.send_audio(message.chat.id,audio=open(f"{name}/{video.title}.mp3", 'rb'))
@@ -128,7 +129,7 @@ async def plalist(url, name, message):
 			await download(file, name, message)
 		except ValueError:
 			await bot.send_message(message.chat.id,'❌Ошибка скачивания')
-			#break
+
 
 
 
