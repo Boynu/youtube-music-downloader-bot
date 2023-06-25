@@ -1,4 +1,4 @@
-import sqlite3, datetime, asyncio, logging, os, eyed3, subprocess
+import sqlite3, datetime, asyncio, logging, os, eyed3, subprocess, traceback
 from pytube import YouTube
 from pytube import Playlist
 
@@ -152,6 +152,7 @@ async def download(url, name, message, play):
 		if video.length > 1800:
 			await bot.send_message(message.chat.id, f'❌<i>{video.title}</i> длится более 30 минут!', 'HTML')
 		else:
+			await bot.send_chat_action(message.chat.id, ChatActions.UPLOAD_VOICE)
 			audio = video.streams.filter(only_audio = True).first()
 			name_path = audio.download(name+'/')
 			mp3 = f"{name}/{video.title}.mp3"
@@ -163,7 +164,8 @@ async def download(url, name, message, play):
 				file.write(file_id+' ')
 			os.remove(name_path)
 			os.remove(f"{name}/{video.title}.mp3")
-	except:
+	except Exception:
+		traceback.print_exc()
 		raise ValueError('Ошибка')
 	await start_d.delete()
 
@@ -261,7 +263,6 @@ async def cho(message, state: FSMContext):
 		await check(message, url, state, name)
 	else:
 		await bot.send_message(message.chat.id, '❌Ошибка. Вы указали неправильное название плейлиста')
-
 
 
 
