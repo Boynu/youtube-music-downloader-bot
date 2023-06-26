@@ -17,6 +17,12 @@ bot = Bot(token=token)
 storage = MemoryStorage()
 dp = Dispatcher(bot,storage=storage)
 
+def check_numb(path):
+	with open(path) as file:
+		ids = file.read()
+	ids = ids.split(' ')
+	del ids[-1]
+	return len(ids)
 
 class go(StatesGroup):
 	newlist = State()
@@ -57,12 +63,12 @@ async def start(message: types.Message,state: FSMContext):
 
 	elif 'youtube' in message.text:
 		markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-		markup.row(types.KeyboardButton('ПЛЕЙЛИСТ ПО УМОЛЧАНИЮ'))
+		markup.row(types.KeyboardButton(f'ПЛЕЙЛИСТ ПО УМОЛЧАНИЮ [{check_numb(f"{userid}/ids.txt")}]'))
 		dirs = os.listdir(f'{userid}/')
 		dirs.remove('ids.txt')
 		try:
 			for name in dirs:
-				markup.row(types.KeyboardButton(name[:-4]))
+				markup.row(types.KeyboardButton(f'{name[:-4]} [{check_numb(f"{userid}/{name}")}]'))
 		except:
 			pass
 		await bot.send_message(message.chat.id, '👇Укажите в какой плейлист вы хотите загрузить песни','HTML', reply_markup = markup)
@@ -72,11 +78,11 @@ async def start(message: types.Message,state: FSMContext):
 
 	elif message.text == '📂Показать всю скаченную музыку' or message.text == '/get':
 		markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-		markup.row(types.KeyboardButton('ПЛЕЙЛИСТ ПО УМОЛЧАНИЮ'))
+		markup.row(types.KeyboardButton(f'ПЛЕЙЛИСТ ПО УМОЛЧАНИЮ [{check_numb(f"{userid}/ids.txt")}]'))
 		dirs = os.listdir(f'{userid}/')
 		dirs.remove('ids.txt')
 		for name in dirs:
-			markup.row(types.KeyboardButton(name[:-4]))
+			markup.row(types.KeyboardButton(f'{name[:-4]} [{check_numb(f"{userid}/{name}")}]'))
 		await bot.send_message(message.chat.id,'⚠️Внимание, вы получите список всех песен которые когда либо скачивали в этом боте.\nЕсли вы хотите использовать этого бота для прослушивания музыки, то нажмите на кнопку <i>"🧹Очистить историю чата"</i> и выберете плейлист','HTML', reply_markup = markup)
 		await go.get.set()
 
@@ -85,18 +91,18 @@ async def start(message: types.Message,state: FSMContext):
 		dirs = os.listdir(f'{userid}/')
 		dirs.remove('ids.txt')
 		for name in dirs:
-			markup.row(types.KeyboardButton(name[:-4]))
+			markup.row(types.KeyboardButton(f'{name[:-4]} [{check_numb(f"{userid}/{name}")}]'))
 		await bot.send_message(message.chat.id, '🗑Выберете плейлист для удаления', reply_markup=markup)
 		await go.dell.set()
 
 	elif message.text == '/clear':
 		markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-		markup.row(types.KeyboardButton('ПЛЕЙЛИСТ ПО УМОЛЧАНИЮ'))
+		markup.row(types.KeyboardButton(f'ПЛЕЙЛИСТ ПО УМОЛЧАНИЮ [{check_numb(f"{userid}/ids.txt")}]'))
 		dirs = os.listdir(f'{userid}/')
 		dirs.remove('ids.txt')
 		try:
 			for name in dirs:
-				markup.row(types.KeyboardButton(name[:-4]))
+				markup.row(types.KeyboardButton(f'{name[:-4]} [{check_numb(f"{userid}/{name}")}]'))
 		except:
 			pass
 		await bot.send_message(message.chat.id, '🧹Выберете плейлист для очистки', reply_markup=markup)
@@ -196,7 +202,8 @@ async def newlist(message, state: FSMContext):
 @dp.message_handler(state=go.get)
 async def get(message, state: FSMContext):
 	userid = message.chat.id
-	name = message.text + '.txt' 
+	name = (message.text).split(' [')[0] 
+	name += '.txt'
 
 	if name == 'ПЛЕЙЛИСТ ПО УМОЛЧАНИЮ.txt':
 		with open(f'{userid}/ids.txt') as file:
@@ -221,7 +228,8 @@ async def get(message, state: FSMContext):
 @dp.message_handler(state=go.dell)
 async def dell(message, state: FSMContext):
 	userid = message.chat.id
-	name = message.text + '.txt'
+	name = (message.text).split(' [')[0] 
+	name += '.txt'
 
 	if name in os.listdir(f'{userid}/'):
 		os.remove(f'{userid}/{name}')
@@ -236,7 +244,8 @@ async def dell(message, state: FSMContext):
 @dp.message_handler(state=go.clear)
 async def clear(message, state: FSMContext):
 	userid = message.chat.id
-	name = message.text + '.txt'
+	name = (message.text).split(' [')[0] 
+	name += '.txt'
 	if name == 'ПЛЕЙЛИСТ ПО УМОЛЧАНИЮ.txt':
 		with open(f'{userid}/ids.txt', 'w') as file:
 			file.write('')
@@ -256,7 +265,8 @@ async def cho(message, state: FSMContext):
 		url = data['url']
 	await state.finish()
 	userid = message.chat.id
-	name = message.text + '.txt'
+	name = (message.text).split(' [')[0] 
+	name += '.txt'
 	if name == 'ПЛЕЙЛИСТ ПО УМОЛЧАНИЮ.txt':
 		await check(message, url, state, 'ids.txt')
 	elif name in os.listdir(f'{userid}/'):
