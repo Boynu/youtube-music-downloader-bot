@@ -47,6 +47,9 @@ async def start(message: types.Message,state: FSMContext):
 		cursor.execute("""CREATE TABLE IF NOT EXISTS users(
 				id INTEGER, username TEXT
 			)""")
+		cursor.execute("""CREATE TABLE IF NOT EXISTS data(
+				link TEXT, t_id TEXT
+			)""")
 		connect.commit()
 
 		cursor.execute(f"SELECT * FROM users WHERE id = {userid}")
@@ -135,7 +138,8 @@ async def check(message, url, state, play):
 		for link in url.split(' '):
 			try:
 				await download(link, str(userid), message, play)
-			except:
+			except Exception:
+				traceback.print_exc()
 				await bot.send_message(message.chat.id, '❌Ошибка при скачивании песни')
 	await mainmenu(message, state)
 
@@ -152,28 +156,39 @@ def convert(mp4,mp3):
 
 async def download(url, name, message, play):
 	userid = message.chat.id
-	try:
-		video = YouTube(url)
-		start_d = await bot.send_message(message.chat.id, f'💾Началось скачивание <i>{video.title}</i>', 'HTML', reply_markup=types.ReplyKeyboardRemove())
-		if video.length > 1800:
-			await bot.send_message(message.chat.id, f'❌<i>{video.title}</i> длится более 30 минут!', 'HTML')
-		else:
-			await bot.send_chat_action(message.chat.id, ChatActions.UPLOAD_VOICE)
-			audio = video.streams.filter(only_audio = True).first()
-			name_path = audio.download(name+'/')
-			mp3 = f"{name}/{video.title}.mp3"
-			convert(name_path, mp3)
-			matadata(f"{name}/{video.title}.mp3",video.title,video.author)
-			file = await bot.send_audio(message.chat.id,audio=open(f"{name}/{video.title}.mp3", 'rb'))
-			file_id = file.audio.file_id
-			with open(f'{userid}/{play}', 'a') as file:
-				file.write(file_id+' ')
-			os.remove(name_path)
-			os.remove(f"{name}/{video.title}.mp3")
-	except Exception:
-		traceback.print_exc()
-		raise ValueError('Ошибка')
-	await start_d.delete()
+	link_id = url.split('watch?v=')[1].split('&')[0]
+	cursor.execute(f"SELECT * FROM data WHERE link = '{link_id}'")
+	data = cursor.fetchone()
+	if data is None:
+		try:
+			video = YouTube(url)
+			start_d = await bot.send_message(message.chat.id, f'💾Началось скачивание <i>{video.title}</i>', 'HTML', reply_markup=types.ReplyKeyboardRemove())
+			if video.length > 1800:
+				await bot.send_message(message.chat.id, f'❌<i>{video.title}</i> длится более 30 минут!', 'HTML')
+			else:
+				await bot.send_chat_action(message.chat.id, ChatActions.UPLOAD_VOICE)
+				audio = video.streams.filter(only_audio = True).first()
+				name_path = audio.download(name+'/')
+				mp3 = f"{name}/{video.title}.mp3"
+				convert(name_path, mp3)
+				matadata(f"{name}/{video.title}.mp3",video.title,video.author)
+				file = await bot.send_audio(message.chat.id,audio=open(f"{name}/{video.title}.mp3", 'rb'))
+				file_id = file.audio.file_id
+				with open(f'{userid}/{play}', 'a') as file:
+					file.write(file_id+' ')
+				cursor.execute("INSERT INTO data(link, t_id) VALUES(?,?);", (link_id, file_id,))
+				connect.commit()
+				os.remove(name_path)
+				os.remove(f"{name}/{video.title}.mp3")
+		except Exception:
+			traceback.print_exc()
+			raise ValueError('Ошибка')
+		await start_d.delete()
+	else:
+		file = await bot.send_audio(message.chat.id, audio=data[1])
+		file_id = file.audio.file_id
+		with open(f'{userid}/{play}', 'a') as file:
+			file.write(file_id+' ')
 
 async def plalist(url, name, message, play):
 	p = Playlist(url)
