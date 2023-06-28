@@ -24,6 +24,12 @@ def check_numb(path):
 	del ids[-1]
 	return len(ids)
 
+def check_error(userid):
+	files = os.listdir(f'{userid}/')
+	for file in files:
+		if file[-4:] != '.txt':
+			os.remove(f'{userid}/{file}')
+
 class go(StatesGroup):
 	newlist = State()
 	get = State()
@@ -39,6 +45,7 @@ cursor= connect.cursor()
 @dp.message_handler(state=None)
 async def start(message: types.Message,state: FSMContext):
 	userid = message.chat.id
+	check_error(userid)
 	if message.text == '/start':
 		today = datetime.datetime.today()
 		f = 'Старт '+ str(message.chat.id) + ' ' + today.strftime("%Y-%m-%d-%H.%M.%S")
@@ -122,16 +129,18 @@ async def start(message: types.Message,state: FSMContext):
 			await bot.send_message(message.chat.id, '❌У вас больше 5 плейлистов!')
 
 async def mainmenu(message, state):
+	userid = message.chat.id
+	check_error(userid)
 	markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 	markup.row(types.KeyboardButton('📂Показать всю скаченную музыку'))
 	markup.row(types.KeyboardButton('➕Создать новый плейлист'))
 	
-	userid = message.chat.id
 	text = '🎵🔗Отправьте ссылку на музыку или плейлист (Из youtube.com или music.youtube.com)\nВы можете указать несколько песен через пробел\n\n📰Справка /help'
 	await bot.send_message(message.chat.id, text, reply_markup=markup)
 
 async def check(message, url, state, play):
 	userid = message.chat.id
+	check_error(userid)
 	if 'playlist' in url:
 		await plalist(url, str(userid), message, play)
 	else:
@@ -156,6 +165,7 @@ def convert(mp4,mp3):
 
 async def download(url, name, message, play):
 	userid = message.chat.id
+	check_error(userid)
 	link_id = url.split('watch?v=')[1].split('&')[0]
 	cursor.execute(f"SELECT * FROM data WHERE link = '{link_id}'")
 	data = cursor.fetchone()
@@ -191,6 +201,8 @@ async def download(url, name, message, play):
 			file.write(file_id+' ')
 
 async def plalist(url, name, message, play):
+	userid = message.chat.id
+	check_error(userid)
 	p = Playlist(url)
 	text = f'📥Скачивание плейлиста <i>{p.title}</i>'
 	await bot.send_message(message.chat.id, text, 'HTML')
@@ -204,6 +216,7 @@ async def plalist(url, name, message, play):
 @dp.message_handler(state=go.newlist)
 async def newlist(message, state: FSMContext):
 	userid = message.chat.id
+	check_error(userid)
 	name = message.text
 	if name+'.txt' in os.listdir(f'{userid}/'):
 		await bot.send_message(message.chat.id, '❌Такой плейлист уже существует!')
@@ -217,6 +230,7 @@ async def newlist(message, state: FSMContext):
 @dp.message_handler(state=go.get)
 async def get(message, state: FSMContext):
 	userid = message.chat.id
+	check_error(userid)
 	name = (message.text).split(' [')[0] 
 	name += '.txt'
 
@@ -243,6 +257,7 @@ async def get(message, state: FSMContext):
 @dp.message_handler(state=go.dell)
 async def dell(message, state: FSMContext):
 	userid = message.chat.id
+	check_error(userid)
 	name = (message.text).split(' [')[0] 
 	name += '.txt'
 
@@ -259,6 +274,7 @@ async def dell(message, state: FSMContext):
 @dp.message_handler(state=go.clear)
 async def clear(message, state: FSMContext):
 	userid = message.chat.id
+	check_error(userid)
 	name = (message.text).split(' [')[0] 
 	name += '.txt'
 	if name == 'ПЛЕЙЛИСТ ПО УМОЛЧАНИЮ.txt':
@@ -280,6 +296,7 @@ async def cho(message, state: FSMContext):
 		url = data['url']
 	await state.finish()
 	userid = message.chat.id
+	check_error(userid)
 	name = (message.text).split(' [')[0] 
 	name += '.txt'
 	if name == 'ПЛЕЙЛИСТ ПО УМОЛЧАНИЮ.txt':
