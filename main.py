@@ -180,7 +180,7 @@ async def download(url, name, message, play):
 			if video.length > 1800:
 				await bot.send_message(message.chat.id, f'❌<i>{video.title}</i> длится более 30 минут!', 'HTML')
 			else:
-				await bot.send_chat_action(message.chat.id, ChatActions.UPLOAD_VOICE)
+				asyncio.create_task(send_activity(message.chat.id))
 				audio = video.streams.filter(only_audio = True).first()
 				name_path = audio.download(name+'/')
 				mp3 = f"{name}/{video.title}.mp3"
@@ -310,6 +310,10 @@ async def cho(message, state: FSMContext):
 	else:
 		await bot.send_message(message.chat.id, '❌Ошибка. Вы указали неправильное название плейлиста')
 
+async def send_activity(chat_id):
+	while True:
+		await bot.send_chat_action(chat_id, ChatActions.UPLOAD_VOICE)
+		await asyncio.sleep(4)
 
 
 
