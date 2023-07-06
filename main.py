@@ -1,6 +1,7 @@
 import sqlite3, datetime, asyncio, logging, os, eyed3, subprocess, traceback
 from pytube import YouTube
 from pytube import Playlist
+from pytube import exceptions
 
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
@@ -194,6 +195,14 @@ async def download(url, name, message, play):
 				connect.commit()
 				os.remove(name_path)
 				os.remove(f"{name}/{video.title}.mp3")
+		except exceptions.AgeRestrictedError:
+			await bot.send_message(message.chat.id, '❌Видео имеет возрастные ограничения и не может быть доступно без OAuth')
+		except exceptions.LiveStreamError:
+			await bot.send_message(message.chat.id, '❌Это прямая трансляция')
+		except exceptions.VideoRegionBlocked:
+			await bot.send_message(message.chat.id, '❌Регион сервера не позволяет скачать песню!')
+		except exceptions.VideoUnavailable:
+			await bot.send_message(message.chat.id, '❌Видео недоступно!')
 		except Exception:
 			traceback.print_exc()
 			raise ValueError('Ошибка')
@@ -311,7 +320,7 @@ async def cho(message, state: FSMContext):
 		await bot.send_message(message.chat.id, '❌Ошибка. Вы указали неправильное название плейлиста')
 
 async def send_activity(chat_id):
-	while True:
+	for i in range(2):
 		await bot.send_chat_action(chat_id, ChatActions.UPLOAD_VOICE)
 		await asyncio.sleep(4)
 
