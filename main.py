@@ -46,7 +46,6 @@ cursor= connect.cursor()
 @dp.message_handler(state=None)
 async def start(message: types.Message,state: FSMContext):
 	userid = message.chat.id
-	check_error(userid)
 	if message.text == '/start':
 		today = datetime.datetime.today()
 		f = 'Старт '+ str(message.chat.id) + ' ' + today.strftime("%Y-%m-%d-%H.%M.%S")
@@ -68,7 +67,7 @@ async def start(message: types.Message,state: FSMContext):
 			os.mkdir(str(userid))
 			with open(f'{userid}/ids.txt', 'w') as file:
 				pass
-
+		check_error(userid)
 		await mainmenu(message, state)
 
 
@@ -181,20 +180,23 @@ async def download(url, name, message, play):
 			if video.length > 1800:
 				await bot.send_message(message.chat.id, f'❌<i>{video.title}</i> длится более 30 минут!', 'HTML')
 			else:
-				asyncio.create_task(send_activity(message.chat.id))
+				await bot.send_chat_action(message.chat.id, ChatActions.UPLOAD_VOICE)
 				audio = video.streams.filter(only_audio = True).first()
 				name_path = audio.download(name+'/')
-				mp3 = f"{name}/{video.title}.mp3"
+				name_song = video.title.replace('/','')
+				mp3 = f"{name}/{name_song}.mp3"
+				await bot.send_chat_action(message.chat.id, ChatActions.UPLOAD_VOICE)
 				convert(name_path, mp3)
-				matadata(f"{name}/{video.title}.mp3",video.title,video.author)
-				file = await bot.send_audio(message.chat.id,audio=open(f"{name}/{video.title}.mp3", 'rb'))
+				await bot.send_chat_action(message.chat.id, ChatActions.UPLOAD_VOICE)
+				matadata(f"{name}/{name_song}.mp3",video.title,video.author)
+				file = await bot.send_audio(message.chat.id,audio=open(f"{name}/{name_song}.mp3", 'rb'))
 				file_id = file.audio.file_id
 				with open(f'{userid}/{play}', 'a') as file:
 					file.write(file_id+' ')
 				cursor.execute("INSERT INTO data(link, t_id) VALUES(?,?);", (link_id, file_id,))
 				connect.commit()
 				os.remove(name_path)
-				os.remove(f"{name}/{video.title}.mp3")
+				os.remove(f"{name}/{name_song}.mp3")
 		except exceptions.AgeRestrictedError:
 			await bot.send_message(message.chat.id, '❌Видео имеет возрастные ограничения и не может быть доступно без OAuth')
 		except exceptions.LiveStreamError:
@@ -318,11 +320,6 @@ async def cho(message, state: FSMContext):
 		await check(message, url, state, name)
 	else:
 		await bot.send_message(message.chat.id, '❌Ошибка. Вы указали неправильное название плейлиста')
-
-async def send_activity(chat_id):
-	for i in range(2):
-		await bot.send_chat_action(chat_id, ChatActions.UPLOAD_VOICE)
-		await asyncio.sleep(4)
 
 
 
