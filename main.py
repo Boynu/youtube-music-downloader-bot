@@ -293,6 +293,7 @@ async def get(message, state: FSMContext):
 		del ids[-1]
 		for idd in ids:
 			await bot.send_audio(message.chat.id, audio=idd, reply_markup=types.ReplyKeyboardRemove())
+			await asyncio.sleep(0.5)
 	elif name in os.listdir(f'{userid}/'):
 		with open(f'{userid}/{name}') as file:
 			ids = file.read()
@@ -300,6 +301,7 @@ async def get(message, state: FSMContext):
 		del ids[-1]
 		for idd in ids:
 			await bot.send_audio(message.chat.id, audio=idd, reply_markup=types.ReplyKeyboardRemove())
+			await asyncio.sleep(0.5)
 	else:
 		await bot.send_message(message.chat.id, langs.err_p[ln])
 	await state.finish()
