@@ -82,7 +82,7 @@ async def start(message: types.Message,state: FSMContext):
 		else:
 			await mainmenu(message, state)
 
-	elif 'youtube' in message.text:
+	elif 'youtube' in message.text or 'youtu.be' in message.text:
 		userid = message.chat.id
 		ln = await get_ln(userid)
 		markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -95,8 +95,10 @@ async def start(message: types.Message,state: FSMContext):
 		except:
 			pass
 		await bot.send_message(message.chat.id, langs.ch_play[ln],'HTML', reply_markup = markup)
+		urls = message.text
+		urls = urls.replace('youtu.be/','www.youtube.com/watch?v=')
 		async with state.proxy() as data:
-			data['url'] = message.text
+			data['url'] = urls
 		await go.cho.set()
 
 	elif message.text == langs.menu1['RU'] or message.text == langs.menu1['EN'] or message.text == '/get':
