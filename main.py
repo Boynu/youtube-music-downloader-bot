@@ -3,6 +3,8 @@ from pytube import YouTube
 from pytube import Playlist
 from pytube import exceptions
 
+from youtubesearchpython import VideosSearch
+
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import StatesGroup, State
@@ -48,6 +50,7 @@ class go(StatesGroup):
 	clear = State()
 	cho = State()
 	lang = State()
+	search = State()
 
 global connect
 connect = sqlite3.connect('users.db', check_same_thread=False)
@@ -117,6 +120,12 @@ async def start(message: types.Message,state: FSMContext):
 		await bot.send_message(message.chat.id, f'{langs.warn[ln]}\n\n{dirss}</i>','HTML', reply_markup = markup)
 		await go.get.set()
 
+	elif message.text == langs.menu0['RU'] or message.text == langs.menu0['EN'] or message.text == '/search':
+		userid = message.chat.id
+		ln = await get_ln(userid)
+		await bot.send_message(message.chat.id, langs.ch_search[ln], reply_markup=types.ReplyKeyboardRemove())
+		await go.search.set()
+
 	elif message.text == '/del':
 		userid = message.chat.id
 		ln = await get_ln(userid)
@@ -170,6 +179,7 @@ async def mainmenu(message, state):
 	ln = await get_ln(userid)
 	check_error(userid)
 	markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+	markup.row(types.KeyboardButton(langs.menu0[ln]))
 	markup.row(types.KeyboardButton(langs.menu1[ln]))
 	markup.row(types.KeyboardButton(langs.menu2[ln]))
 	markup.row(types.KeyboardButton(langs.menu3[ln]))
@@ -263,6 +273,69 @@ async def plalist(url, name, message, play):
 			await download(file, name, message, play)
 		except ValueError:
 			await bot.send_message(message.chat.id, langs.err_down[ln])
+
+@dp.message_handler(state=go.search)
+async def search(message, state: FSMContext):
+	userid = message.chat.id
+	ln = await get_ln(userid)
+	await bot.send_message(message.chat.id, langs.start_s[ln])
+	rez = []
+	q = message.text + ' music'
+	videosSearch = VideosSearch(q, limit = 5)
+	for i in range(5):
+		temp = []
+		try:
+			time = videosSearch.result()['result'][i]['duration'].split(':')
+			if len(time) == 3:
+				h, m, s = map(int, time)
+				m += h*60
+			else:
+				m,s = map(int, time)
+			if m <= 30:
+				temp.append(videosSearch.result()['result'][i]['title'])
+				temp.append(videosSearch.result()['result'][i]['duration'])
+				temp.append(videosSearch.result()['result'][i]['link'])
+				temp.append(videosSearch.result()['result'][i]['thumbnails'][-1]['url'])
+				rez.append(temp)
+		except:
+			continue
+	keyboard = types.InlineKeyboardMarkup()
+	keyboard.add(types.InlineKeyboardButton(text=langs.start_d[ln], callback_data="download"))
+	for i in range(len(rez)):
+		text = f"""
+		<b>{rez[i][0]}</b>
+		<i>{rez[i][1]}</i>
+
+		{rez[i][2]}
+		"""
+		try:
+			await bot.send_photo(chat_id = message.chat.id, photo = rez[i][3], caption=text, parse_mode='HTML', reply_markup=keyboard)
+		except:
+			continue
+	await state.finish()
+	await mainmenu(message,state)
+
+@dp.callback_query_handler(text="download")
+async def download_keyboard(call: types.CallbackQuery,state: FSMContext):
+	data = call.message
+	urls = data['caption'].split('\n  ')[-1]
+	userid = int(call['from']['id'])
+	ln = await get_ln(userid)
+	markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+	markup.row(types.KeyboardButton(f'{langs.default[ln]} [{check_numb(f"{userid}/ids.txt")}]'))
+	dirs = os.listdir(f'{userid}/')
+	dirs.remove('ids.txt')
+	try:
+		for name in dirs:
+			markup.row(types.KeyboardButton(f'{name[:-4]} [{check_numb(f"{userid}/{name}")}]'))
+	except:
+		pass
+	await call.message.answer(langs.ch_play[ln],'HTML', reply_markup = markup)
+	
+	async with state.proxy() as data:
+		data['url'] = urls
+	await go.cho.set()
+
 
 
 @dp.message_handler(state=go.newlist)

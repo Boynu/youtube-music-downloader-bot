@@ -11,11 +11,12 @@ Before running the code, make sure that you have the following dependencies inst
 - `pytube`
 - `eyed3`
 - `ffmpeg`
+- `youtube-search-python`
 
 You can install these dependencies using `pip`:
 
 ```bash
-pip install aiogram pytube eyed3
+pip install aiogram pytube eyed3 youtube-search-python
 ```
 
 `ffmpeg` is required to convert downloaded videos to MP3 format. You can install it by following the instructions for your operating system.
@@ -47,6 +48,8 @@ pip install aiogram pytube eyed3
    - `/clear` - delete all songs from the playlist.
    - `/create` - create a new playlist.
    - `/del` - delete playlist.
+   - `/search` - find a song on YouTube
+
 4. To create a new playlist, enter the command `/create` or click "➕Create a new playlist" and follow the bot's instructions.
 5. To get a list of songs from the playlist, use the `/get` command or click "📂Show all downloaded music" and select a playlist.
 6. To delete a playlist, use the `/del` command and select the playlist to delete.
@@ -76,11 +79,12 @@ https://t.me/YM_Download_bot
 - `pytube`
 - `eyed3`
 - `ffmpeg`
+- `youtube-search-python`
 
 Вы можете установить эти зависимости с помощью `pip`:
 
 ```bash
-pip install aiogram pytube eyed3
+pip install aiogram pytube eyed3 youtube-search-python
 ```
 
 `ffmpeg` необходим для конвертации загруженных видео в формат MP3. Вы можете установить его, следуя инструкциям для вашей операционной системы.
@@ -112,6 +116,8 @@ pip install aiogram pytube eyed3
    - `/clear` - удалить все песни из плейлиста.
    - `/create` - создать новый плейлист.
    - `/del` - удалить плейлист.
+   - `/search` - поиск музыки в Ютубе.
+   
 4. Для создания нового плейлиста введите команду `/create` или нажмите кнопку "➕Создать новый плейлист" и следуйте инструкциям бота.
 5. Для получения списка песен из плейлиста используйте команду `/get` или нажмите кнопку "📂Показать всю скаченную музыку" и выберите плейлист.
 6. Для удаления плейлиста используйте команду `/del` и выберите плейлист для удаления.
