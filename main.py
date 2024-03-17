@@ -15,7 +15,7 @@ from aiogram.utils.markdown import hlink
 
 import langs
 
-token = ''
+token = '5338717802:AAFe_Jg86ubkv_F6DViEbjuFrVcqIKqCvSQ'
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=token)
